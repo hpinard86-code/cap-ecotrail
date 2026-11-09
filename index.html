@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cap EcoTrail</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cap EcoTrail">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E1511">
+<style>
+  html,body{margin:0;height:100%;background:#0E1511}
+  iframe{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));border:0;background:#EDF1EB}
+</style>
+</head>
+<body>
+<!-- Remplace l'adresse ci-dessous par l'URL /exec de ton déploiement Apps Script -->
+<iframe src="https://script.google.com/macros/s/AKfycbyMrN0NWL6Qx7VEm3hNfz9lnu1QLQNm68_aKW-ygIJUgrfL-kc8xO05twunPGf-3Oah/exec" title="Cap EcoTrail" allow="clipboard-write"></iframe>
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});</script>
+</body>
+</html>
