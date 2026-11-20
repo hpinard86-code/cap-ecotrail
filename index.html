@@ -14,28 +14,68 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0E1511">
 <style>
-  html,body{margin:0;height:100%;background:#0E1511;transition:background-color .3s}
+  html,body{margin:0;height:100%;background:#0E1511;transition:background-color .3s;font-family:-apple-system,system-ui,sans-serif;overflow:hidden}
   iframe{position:fixed;top:0;left:0;width:1px;min-width:100%;max-width:100%;height:100%;border:0;background:transparent}
   #probe{position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden}
+  #intro{position:fixed;inset:0;z-index:5;background:#000;transition:opacity .5s}
+  #intro video{width:100%;height:100%;object-fit:cover}
+  #intro button{position:absolute;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#fff;font:700 16px -apple-system,system-ui,sans-serif;border-radius:999px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  #skip{top:calc(env(safe-area-inset-top,0px) + 12px);right:16px;height:44px;padding:0 20px}
+  #snd{bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:16px;height:44px;padding:0 16px}
+  #off{position:fixed;inset:0;z-index:4;overflow:auto;color:#F5F5F7;background:#0E1511;padding:calc(env(safe-area-inset-top,0px) + 24px) 20px 40px;display:none}
+  #off h1{font-size:30px;margin:0 0 4px}#off p{color:#A1A1AA;margin:0 0 16px}
+  #off .d{border-radius:18px;background:rgba(255,255,255,.07);padding:12px 14px;margin-bottom:8px}
+  #off .d b{display:block;margin-bottom:4px}#off .d span{display:block;font-size:14px;color:#D4D4D8}
 </style>
 </head>
 <body>
 <div id="probe"></div>
+<div id="off" role="region" aria-label="Hors connexion"></div>
 <script>
 (function(){
   var APP="https://script.google.com/macros/s/AKfycbyMrN0NWL6Qx7VEm3hNfz9lnu1QLQNm68_aKW-ygIJUgrfL-kc8xO05twunPGf-3Oah/exec";
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
   var p=getComputedStyle(document.getElementById("probe"));
   var sat=Math.round(parseFloat(p.paddingTop)||0), sab=Math.round(parseFloat(p.paddingBottom)||0);
-  var f=document.createElement("iframe");
-  f.title="Cap EcoTrail";f.allow="clipboard-write";
-  f.src=APP+"?sat="+sat+"&sab="+sab;
-  document.body.appendChild(f);
-  try{var c=localStorage.getItem("cap-bg");if(c)document.body.style.background=document.documentElement.style.background=c}catch(e){}
+  var c=ls("cap-bg");if(c)document.body.style.background=document.documentElement.style.background=c;
+
+  function offline(){
+    var o=document.getElementById("off"),ag=null;try{ag=JSON.parse(ls("cap-agenda")||"null")}catch(e){}
+    var h="<h1>Pas de réseau</h1><p>Voici votre programme des prochains jours. L'appli se rouvrira dès que la connexion revient.</p>";
+    if(ag&&ag.days){var names=ag.names||{a:"Hugo",b:"Pauline"},ks=Object.keys(ag.days).sort();
+      ks.forEach(function(k){var d=ag.days[k],dt=new Date(k+"T12:00:00"),lab=dt.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+        var t="";["a","b"].forEach(function(x){if(d[x])t+="<span>"+names[x]+" : "+d[x].n+" · "+d[x].km+" km</span>"});
+        if(!t)t="<span>Repos</span>";h+='<div class="d"><b>'+lab+"</b>"+t+"</div>"})}
+    else h+="<p>Ouvre l'appli une fois avec du réseau pour enregistrer le programme sur ce téléphone.</p>";
+    o.innerHTML=h;o.style.display="block";
+    window.addEventListener("online",function(){location.reload()});
+  }
+  if(navigator.onLine===false){offline()}
+  else{
+    var f=document.createElement("iframe");f.title="Cap EcoTrail";f.allow="clipboard-write";
+    f.src=APP+"?sat="+sat+"&sab="+sab;document.body.appendChild(f);
+  }
+
+  var mode=ls("cap-video")||"daily", today=new Date().toISOString().slice(0,10);
+  var show=navigator.onLine!==false&&(mode==="always"||(mode==="daily"&&ls("cap-video-last")!==today));
+  if(show){
+    var d=document.createElement("div");d.id="intro";
+    d.innerHTML='<video playsinline muted autoplay preload="auto" src="intro.mp4"></video><button id="skip" type="button">Passer ›</button><button id="snd" type="button">Son</button>';
+    document.body.appendChild(d);
+    var v=d.querySelector("video"),done=false;
+    function end(){if(done)return;done=true;ls("cap-video-last",today);d.style.opacity="0";setTimeout(function(){d.remove()},500)}
+    v.addEventListener("ended",end);v.addEventListener("error",end);d.querySelector("#skip").onclick=end;d.onclick=function(e){if(e.target===v)end()};
+    d.querySelector("#snd").onclick=function(e){e.stopPropagation();v.muted=!v.muted;this.textContent=v.muted?"Son":"Muet";if(!v.muted)v.play()};
+    setTimeout(function(){if(v.readyState<2)end()},4000);
+    var pr=v.play();if(pr&&pr.catch)pr.catch(function(){});
+  }
+
   window.addEventListener("message",function(e){
-    var d=e.data;if(!d||!d.capTheme)return;
-    document.body.style.background=document.documentElement.style.background=d.capTheme;
-    var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",d.capTheme);
-    try{localStorage.setItem("cap-bg",d.capTheme)}catch(x){}
+    var m=e.data;if(!m)return;
+    if(m.capTheme){document.body.style.background=document.documentElement.style.background=m.capTheme;
+      var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute("content",m.capTheme);ls("cap-bg",m.capTheme)}
+    if(m.capAgenda)ls("cap-agenda",JSON.stringify(m.capAgenda));
+    if(m.capVideo)ls("cap-video",m.capVideo);
   });
   if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
 })();
